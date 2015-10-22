@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+
+        <property name="ignoreUnresolvablePlaceholders" value="true" />
+        <property name="ignoreResourceNotFound" value="true" />
+
+        <property name="locations">
+            <list>
+                <value>../ServerApps/xchangecore/core.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- XMPP beans -->
+    <!-- Replace server, servername, and pubsub's host name as appropriate -->
+
+    <bean id="baseCoreConnection" abstract="true" destroy-method="cleanup" init-method="initialize"
+        class="com.leidos.xchangecore.core.infrastructure.xmpp.communications.CoreConnectionImpl">
+
+        <property name="server">
+            <value>${xmpp.fqdn}</value>
+        </property>
+        <property name="servername">
+            <value>${xmpp.fqdn}</value>
+        </property>
+        <property name="port">
+            <value>5222</value>
+        </property>
+        <property name="pubSubSvc">
+            <value>pubsub.${xmpp.fqdn}</value>
+        </property>
+        <property name="username">
+            <value>${xmpp.core.username}</value>
+        </property>
+        <property name="password">
+            <value>${xmpp.core.password}</value>
+        </property>
+        <property name="coreLatLon">
+            <value>${core.latlon}</value>
+        </property>
+        <property name="resource">
+            <value>CoreConnection</value>
+        </property>
+        <property name="interestGroupRoot">
+            <value>/interestGroup</value>
+        </property>
+        <property name="debug">
+            <value>false</value>
+        </property>
+        <property name="waitTimeInSeconds">
+            <value>10</value>
+        </property>
+        <property name="pingInterval">
+            <value>${pingInterval}</value>
+        </property>
+    </bean>
+
+    <bean id="baseInterestManager" abstract="true" init-method="initialize"
+        class="com.leidos.xchangecore.core.infrastructure.xmpp.communications.InterestManagerImpl">
+    </bean>
+
+    <bean id="coreConnection" parent="baseCoreConnection" />
+
+    <bean id="interestManager" parent="baseInterestManager"> 
+        <property name="coreConnection" ref="coreConnection" />
+    </bean>
+
+    <bean id="coreXMPPUtils" class="com.leidos.xchangecore.core.infrastructure.xmpp.apps.CoreXMPPUtils">
+        <property name="coreConnection" ref="coreConnection" />
+        <property name="interestManager" ref="interestManager" />
+    </bean>
+
+    <bean id="util" class="com.leidos.xchangecore.core.infrastructure.xmpp.apps.XmppNodesUtil">
+        <property name="coreConnection" ref="coreConnection" />
+        <property name="coreXMPPUtils" ref="coreXMPPUtils" />
+    </bean>
+
+</beans>
+
